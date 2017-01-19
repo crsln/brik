@@ -9,8 +9,10 @@ canvas { background: #eee; display: block; margin: 0 auto; }
 </style>
 </head>
 <body>
-
 <canvas id="myCanvas" width="960" height="720"></canvas>
+
+<p id="score" style="font-size:%200"></p>
+<p id="restart" style="fonnt-size:%200" onClick="reload()"><b>===============> RESTART <===============</b></p>
 
 <script>
 var canvas = document.getElementById("myCanvas");
@@ -34,6 +36,9 @@ var brickHeight = 20;
 var brickPadding = 10;
 var brickOffsetTop = 30;
 var brickOffsetLeft = 30;	
+var score = 0;
+var gameOver = 0;
+var handle = setInterval(draw, 8);
 
 var bricks = [];
 for(c=0; c<brickColumnCount; c++) {
@@ -41,6 +46,13 @@ for(c=0; c<brickColumnCount; c++) {
 	for(r=0; r<brickRowCount; r++) {
 		bricks[c][r] = { x: 0, y: 0, status: 1 };
 	}
+}
+
+function drawScore(){
+	ctx.font = "10px Arial";
+	ctx.fillStyle = "black";
+	ctx.fillText("Score: "+score, 8, 20);
+	document.getElementById('score').innerHTML = "SCORE: "+score;
 }
 
 function drawBricks() {
@@ -82,8 +94,13 @@ function drawBricks() {
 		ctx.closePath();
 	}
 
+	function reload(){
+		location.reload();
+	}
+
 	function draw() {
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
+		drawScore();
 		drawBricks();
 		drawBall();
 		drawPadlle();
@@ -100,9 +117,11 @@ function drawBricks() {
 			if(x < paddleX+paddleWidth && (paddleX == x || paddleX < x)){
 				dy = -dy;
 			}
-			else{
-				alert("Game Over");
-				location.reload();
+			else{				
+				ctx.font = "20px Arial";
+				ctx.fillStyle = "black";
+				ctx.fillText("Score: "+score+" Game Over", 250, 200);
+				clearInterval(handle);
 			}
 		}
 		else if(y + dy < ballRadius){
@@ -148,13 +167,14 @@ function drawBricks() {
 					if(x > b.x && x < b.x+brickWidth && y > b.y && y < b.y+brickHeight) {
 						dy = -dy;
 						b.status = 0;
+						score += 5;
 					}   
 				}
 			}
 		}
 	}
+	handle;
 
-	setInterval(draw, 8);
 	</script>
 
 	</body>
