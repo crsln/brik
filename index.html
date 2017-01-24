@@ -1,12 +1,6 @@
 <!DOCTYPE html>
 <html>
 <head>
-<script type="text/javascript" src="C:/Users/c.arslan/Desktop/Brick/drawScore.js"></script>
-<script type="text/javascript" src="C:/Users/c.arslan/Desktop/Brick/drawBall.js"></script>
-<script type="text/javascript" src="C:/Users/c.arslan/Desktop/Brick/randomColor.js"></script>
-<script type="text/javascript" src="C:/Users/c.arslan/Desktop/Brick/drawBricks.js"></script>
-<script type="text/javascript" src="C:/Users/c.arslan/Desktop/Brick/drawPaddle.js"></script>
-
 <meta charset="utf-8" />
 <title>Brik</title>
 <style>
@@ -16,11 +10,32 @@ canvas { background: #eee; display: block; margin: 0 auto; }
 </head>
 <body>
 <canvas id="myCanvas" width="960" height="720"></canvas>
-
 <p id="score" style="font-size:%200"></p>
-<p id="restart" style="fonnt-size:%200" onClick="reload()"><b>===============> RESTART <===============</b></p>
+<p id="restart" style="fonnt-size:%200" onClick="reload()"><b>PRESS "R" TO RESTART</b></p>
 
 <script>
+
+
+
+//brick variables
+var brickRowCount = 3;
+var brickColumnCount = 11;
+var brickWidth = 75;
+var brickHeight = 20;
+var brickPadding = 10;
+var brickOffsetTop = 30;
+var brickOffsetLeft = 30;
+var bricks = [];
+for(c=0; c<brickColumnCount; c++) {
+	bricks[c] = [];
+	for(r=0; r<brickRowCount; r++) {
+		bricks[c][r] = { x: 0, y: 0, status: 1 };
+	}
+}
+
+var color = "#ff0200";
+var score = 0;
+var ballRadius = 10;
 var canvas = document.getElementById("myCanvas");
 var ctx = canvas.getContext("2d");
 var x = canvas.width/2;
@@ -30,8 +45,13 @@ var dy = -2;
 var rightPressed = false;
 var leftPressed = false;
 
+//paddle variables
+var paddleHeight = 10;
+var paddleWidth = 70;
+var paddleX = (canvas.width-paddleWidth)/2;
+
 var gameOver = 0;
-var handle = setInterval(draw, 8);
+var handle = setInterval(draw, 10);
 
 	function reload(){
 		location.reload();
@@ -42,7 +62,7 @@ var handle = setInterval(draw, 8);
 		drawScore(100,20);
 		drawBricks();
 		drawBall(x, y);
-		drawPadlle();
+		drawPadlle(paddleX,paddleWidth,paddleHeight);
 		collisionDetection();
 
 		if(rightPressed && paddleX < canvas.width-paddleWidth) {
@@ -53,7 +73,7 @@ var handle = setInterval(draw, 8);
 		}
 
 		if(y + dy == (canvas.height-ballRadius)-10 ){		
-			if(x < paddleX+paddleWidth && (paddleX == x || paddleX < x)){
+			if(x < paddleX+paddleWidth+ballRadius && (paddleX == x || paddleX-ballRadius < x)){
 				dy = -dy;
 			}
 			else{				
@@ -77,8 +97,71 @@ var handle = setInterval(draw, 8);
 		y += dy;
 	}
 
+	function drawBall(posX, posY){	
+		ctx.beginPath();
+		ctx.arc(posX, posY, ballRadius, 0, Math.PI*2);
+		ctx.fillStyle = color;
+		ctx.fill();
+		ctx.closePath();
+	}
+
+	function drawPadlle(paddleX, paddleWidth, paddleHeight){
+	ctx.beginPath();
+	ctx.rect(paddleX, canvas.height-(paddleHeight+10), paddleWidth, paddleHeight);
+	ctx.fillStyle = "#0095DD";
+	ctx.fill();
+	ctx.closePath();
+	}
+
+	function drawBricks() {
+	for(c=0; c<brickColumnCount; c++) {
+		for(r=0; r<brickRowCount; r++) {
+			if(bricks[c][r].status == 1) {
+				var brickX = (c*(brickWidth+brickPadding))+brickOffsetLeft;
+				var brickY = (r*(brickHeight+brickPadding))+brickOffsetTop;
+				bricks[c][r].x = brickX;
+				bricks[c][r].y = brickY;
+				ctx.beginPath();
+				ctx.rect(brickX, brickY, brickWidth, brickHeight);
+				ctx.fillStyle = "#0095DD";
+				ctx.fill();
+				ctx.closePath();
+				}
+			}
+		}	
+	}
+	
+	function drawScore(posX, posY){
+		ctx.font = "10px Arial";
+		ctx.fillStyle = "black";
+		ctx.fillText("Score: "+score, posX, posY);
+		document.getElementById('score').innerHTML = "SCORE: "+score;
+	}
+
+	function randomColor(){		
+		var colors = ["#17202A", "#85C1E9", "#F1C40F", "#49A75C"];
+		var n = Math.floor(Math.random() * 4);
+		color = colors[n];
+	}
+
+	function collisionDetection() {
+		for(c=0; c<brickColumnCount; c++) {
+			for(r=0; r<brickRowCount; r++) {
+				var b = bricks[c][r];
+				if(b.status == 1) {
+					if(x > (b.x)-ballRadius && x < (b.x+brickWidth)+ballRadius && y > b.y && y < b.y+brickHeight) {
+						dy = -dy;
+						b.status = 0;
+						score += 5;
+					}   
+				}
+			}
+		}
+	}
+
 	document.addEventListener("keydown", keyDownHandler, false);
 	document.addEventListener("keyup", keyUpHandler, false);
+	document.addEventListener("keydown", restartGameHandler, false);
 
 	function keyDownHandler(e) {
 		if(e.keyCode == 39) {
@@ -98,20 +181,12 @@ var handle = setInterval(draw, 8);
 		}
 	}
 
-	function collisionDetection() {
-		for(c=0; c<brickColumnCount; c++) {
-			for(r=0; r<brickRowCount; r++) {
-				var b = bricks[c][r];
-				if(b.status == 1) {
-					if(x > b.x && x < b.x+brickWidth && y > b.y && y < b.y+brickHeight) {
-						dy = -dy;
-						b.status = 0;
-						score += 5;
-					}   
-				}
-			}
+	function restartGameHandler(e) {
+		if(e.keyCode == 82) {
+			reload();
 		}
 	}
+	
 	handle;
 
 	</script>
